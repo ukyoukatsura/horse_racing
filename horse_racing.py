@@ -22,12 +22,13 @@ class Net(nn.Module):
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = self.bn1(x)
-        # x = self.dropout(x)
+        x = self.dropout(x)
         x = F.relu(self.fc2(x))
         x = self.bn1(x)
-        # x = self.dropout(x)
-        x = self.fc3(x)
-        x = self.sigmoid(x)
+        x = self.dropout(x)
+        # x = self.fc3(x)
+        # x = self.sigmoid(x)
+        x = self.sigmoid(self.fc3(x))
         return x
 
 #データセットの読み込み
@@ -69,10 +70,12 @@ def train(args, model, device, train_loader, optimizer, epoch):
         optimizer.step()
         #print(batch_idx)
         if batch_idx % args.log_interval == 0:
-            # print("###target###")
-            # print(target)
-            # print("###output###")
-            # print(output)
+            # print("###data###")
+            # print(data)
+            print("###target###")
+            print(target)
+            print("###output###")
+            print(output)
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
@@ -104,11 +107,11 @@ def main():
     parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S', help='random seed (default: 1)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
-    parser.add_argument('--save-model', action='store_true', default=False, help='For Saving the current Model')
+    parser.add_argument('--save-model', action='store_true', default=True, help='For Saving the current Model')
     args = parser.parse_args()
 
     data_set = MyDataset()
-    train_loader = torch.utils.data.DataLoader(data_set, batch_size=args.batch_size, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(data_set, batch_size=args.batch_size, shuffle=True)
 
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     print(torch.cuda.is_available())
@@ -121,14 +124,14 @@ def main():
     #optimizer = optim.Adadelta(model.parameters(), lr=args.lr)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
-    scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
+    #scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, optimizer, epoch)
         #test(args, model, device, test_loader)
-        scheduler.step()
+        #scheduler.step()
 
     if args.save_model:
-        torch.save(model.state_dict(), "horse_racing_prediction.pt")
+        torch.save(model.state_dict(), "horse_racing_prediction_dropout.pt")
 
 if __name__ == '__main__':
     main()
